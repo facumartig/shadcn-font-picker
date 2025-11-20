@@ -25,10 +25,7 @@ import { fetchGoogleFonts, loadFont } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 import { Check, ChevronsUpDown, Filter } from "lucide-react";
 import * as React from "react";
-import { ComponentType } from "react";
-import { FixedSizeList as _FixedSizeList, FixedSizeListProps } from "react-window";
-
-const FixedSizeList = _FixedSizeList as ComponentType<FixedSizeListProps>;
+import { List, type RowComponentProps } from "react-window";
 
 function FontListItem({
   font,
@@ -163,21 +160,28 @@ export function FontPicker({
     setIsOpen(open);
   }, []);
 
-  const Row = React.useCallback(
-    ({ index, style }: { index: number; style: React.CSSProperties }) => {
-      const font = filteredFonts[index];
-      return (
-        <div style={style}>
-          <FontListItem
-            font={font}
-            isSelected={selectedFont?.family === font.family}
-            onSelect={() => handleSelectFont(font)}
-          />
-        </div>
-      );
-    },
-    [filteredFonts, selectedFont, handleSelectFont],
+  const RowComponent = ({
+  index,
+  style,
+  fonts,
+  selectedFont,
+  onSelectFont,
+}: RowComponentProps<{
+  fonts: GoogleFont[];
+  selectedFont: GoogleFont | null;
+  onSelectFont: (font: GoogleFont) => void;
+}>) => {
+  const font = fonts[index];
+  return (
+    <div style={style}>
+      <FontListItem
+        font={font}
+        isSelected={selectedFont?.family === font.family}
+        onSelect={() => onSelectFont(font)}
+      />
+    </div>
   );
+}
 
   return (
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
@@ -266,14 +270,16 @@ export function FontPicker({
               <CommandEmpty>No fonts found.</CommandEmpty>
               <CommandGroup>
                 <div className={`h-[${height}px]`}>
-                  <FixedSizeList
-                    height={height}
-                    itemCount={filteredFonts.length}
-                    itemSize={55}
-                    width="100%"
-                  >
-                    {Row}
-                  </FixedSizeList>
+                <List
+                  rowComponent={RowComponent}
+                  rowCount={filteredFonts.length}
+                  rowHeight={55}
+                  rowProps={{
+                    fonts: filteredFonts,
+                    selectedFont,
+                    onSelectFont: handleSelectFont,
+                  }}
+                />
                 </div>
               </CommandGroup>
             </>
